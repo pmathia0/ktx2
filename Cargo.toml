@@ -1,0 +1,9 @@
+[package]
+name = "ktx2"
+version = "0.1.1"
+authors = ["Peter Mathia <mathiapeter@outlook.com>"]
+edition = "2018"
+
+[dependencies]
+byteorder = { version = "1.4" }
+half = { version="1.7" }
