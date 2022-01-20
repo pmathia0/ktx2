@@ -326,7 +326,7 @@ impl TextureKtx2 {
         texture
     }
 
-    pub fn read_f16(&mut self, x: u32, y: u32) -> f16 {
+    pub fn read_f16(&self, x: u32, y: u32) -> f16 {
         let index: usize = (x as usize) * 2 as usize + (self.pixelWidth as usize) * (y as usize) * 2 as usize;
         let mut a: [u8; 2] = [0,0];
         a[0] = self.levelImages[index];
