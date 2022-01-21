@@ -1,6 +1,9 @@
 #![allow(non_snake_case)]
 #![allow(non_camel_case_types)]
 
+extern crate byteorder;
+extern crate anyhow;
+
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 use std::fs::File;
 use std::io;
@@ -422,56 +425,57 @@ impl TextureKtx2 {
         Ok(())
     }
     
-    pub fn read_from_ktx2(file_name: &str) -> TextureKtx2 {
+    pub fn read_from_ktx2(file_name: &str) -> Result<TextureKtx2, anyhow::Error> {
         
-        let mut file: File = File::open(file_name).unwrap();
+        let mut file = File::open(file_name)?;
+
         let mut buffer: Vec<u8> = vec![];
-        file.read_to_end(&mut buffer).unwrap();
+        file.read_to_end(&mut buffer)?;
         
         let mut vkFormat_rdr = Cursor::new(&buffer[12..16]);
         let vkFormat: VkFormat = unsafe { std::mem::transmute(vkFormat_rdr.read_u32::<LittleEndian>().unwrap()) };
         // println!("vkFormat: {:?}", vkFormat);
         let mut typeSize_rdr = Cursor::new(&buffer[16..20]);
-        let typeSize: u32 = typeSize_rdr.read_u32::<LittleEndian>().unwrap();
+        let typeSize: u32 = typeSize_rdr.read_u32::<LittleEndian>()?;
         // println!("typeSize: {:?}", typeSize);
         let mut pixelWidth_rdr = Cursor::new(&buffer[20..24]);
-        let pixelWidth: u32 = pixelWidth_rdr.read_u32::<LittleEndian>().unwrap();
+        let pixelWidth: u32 = pixelWidth_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelWidth: {:?}", pixelWidth);
         let mut pixelHeight_rdr = Cursor::new(&buffer[24..28]);
-        let pixelHeight: u32 = pixelHeight_rdr.read_u32::<LittleEndian>().unwrap();
+        let pixelHeight: u32 = pixelHeight_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelHeight: {:?}", pixelHeight);
         let mut pixelDepth_rdr = Cursor::new(&buffer[28..32]);
-        let pixelDepth: u32 = pixelDepth_rdr.read_u32::<LittleEndian>().unwrap();
+        let pixelDepth: u32 = pixelDepth_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelDepth: {:?}", pixelDepth);
         let mut layerCount_rdr = Cursor::new(&buffer[32..36]);
-        let layerCount: u32 = layerCount_rdr.read_u32::<LittleEndian>().unwrap();
+        let layerCount: u32 = layerCount_rdr.read_u32::<LittleEndian>()?;
         // println!("layerCount: {:?}", layerCount);
         let mut faceCount_rdr = Cursor::new(&buffer[36..40]);
-        let faceCount: u32 = faceCount_rdr.read_u32::<LittleEndian>().unwrap();
+        let faceCount: u32 = faceCount_rdr.read_u32::<LittleEndian>()?;
         // println!("faceCount: {:?}", faceCount);
         let mut levelCount_rdr = Cursor::new(&buffer[40..44]);
-        let levelCount: u32 = levelCount_rdr.read_u32::<LittleEndian>().unwrap();
+        let levelCount: u32 = levelCount_rdr.read_u32::<LittleEndian>()?;
         // println!("levelCount: {:?}", levelCount);
         let mut supercompressionScheme_rdr = Cursor::new(&buffer[44..48]);
-        let supercompressionScheme: u32 = supercompressionScheme_rdr.read_u32::<LittleEndian>().unwrap();
+        let supercompressionScheme: u32 = supercompressionScheme_rdr.read_u32::<LittleEndian>()?;
         // println!("supercompressionScheme: {:?}", supercompressionScheme);
         let mut dfdByteOffset_rdr = Cursor::new(&buffer[48..52]);
-        let dfdByteOffset: u32 = dfdByteOffset_rdr.read_u32::<LittleEndian>().unwrap();
+        let dfdByteOffset: u32 = dfdByteOffset_rdr.read_u32::<LittleEndian>()?;
         // println!("dfdByteOffset: {:?}", dfdByteOffset);
         let mut dfdByteLength_rdr = Cursor::new(&buffer[52..56]);
-        let dfdByteLength: u32 = dfdByteLength_rdr.read_u32::<LittleEndian>().unwrap();
+        let dfdByteLength: u32 = dfdByteLength_rdr.read_u32::<LittleEndian>()?;
         // println!("dfdByteLength: {:?}", dfdByteLength);
         let mut kvdByteOffset_rdr = Cursor::new(&buffer[56..60]);
-        let kvdByteOffset: u32 = kvdByteOffset_rdr.read_u32::<LittleEndian>().unwrap();
+        let kvdByteOffset: u32 = kvdByteOffset_rdr.read_u32::<LittleEndian>()?;
         // println!("kvdByteOffset: {:?}", kvdByteOffset);
         let mut kvdByteLength_rdr = Cursor::new(&buffer[60..64]);
-        let kvdByteLength: u32 = kvdByteLength_rdr.read_u32::<LittleEndian>().unwrap();
+        let kvdByteLength: u32 = kvdByteLength_rdr.read_u32::<LittleEndian>()?;
         // println!("kvdByteLength: {:?}", kvdByteLength);
         let mut sgdByteOffset_rdr = Cursor::new(&buffer[64..72]);
-        let sgdByteOffset: u64 = sgdByteOffset_rdr.read_u64::<LittleEndian>().unwrap();
+        let sgdByteOffset: u64 = sgdByteOffset_rdr.read_u64::<LittleEndian>()?;
         // println!("sgdByteOffset: {:?}", sgdByteOffset);
         let mut sgdByteLength_rdr = Cursor::new(&buffer[72..80]);
-        let sgdByteLength: u64 = sgdByteLength_rdr.read_u64::<LittleEndian>().unwrap();
+        let sgdByteLength: u64 = sgdByteLength_rdr.read_u64::<LittleEndian>()?;
         // println!("sgdByteLength: {:?}", sgdByteLength);
 
         // read level info
@@ -482,9 +486,9 @@ impl TextureKtx2 {
             let mut byteLength_rdr = Cursor::new(&buffer[88+l as usize *8..96+l as usize *8]);
             let mut uncompressedByteLength_rdr = Cursor::new(&buffer[96+l as usize *8..104+l as usize *8]);
 
-            let byteOffset: u64 = byteOffset_rdr.read_u64::<LittleEndian>().unwrap();
-            let byteLength: u64 = byteLength_rdr.read_u64::<LittleEndian>().unwrap();
-            let uncompressedByteLength: u64 = uncompressedByteLength_rdr.read_u64::<LittleEndian>().unwrap();
+            let byteOffset: u64 = byteOffset_rdr.read_u64::<LittleEndian>()?;
+            let byteLength: u64 = byteLength_rdr.read_u64::<LittleEndian>()?;
+            let uncompressedByteLength: u64 = uncompressedByteLength_rdr.read_u64::<LittleEndian>()?;
             
             // println!("\tbyteOffset: {:?}", byteOffset);
             // println!("\tbyteLength: {:?}", byteLength);
@@ -499,7 +503,7 @@ impl TextureKtx2 {
 
         // read DFD (assuming only 1)
         let mut dfdTotalSize_rdr = Cursor::new(&buffer[dfdByteOffset as usize..dfdByteOffset as usize +4]);
-        let dfdTotalSize: u32 = dfdTotalSize_rdr.read_u32::<LittleEndian>().unwrap();
+        let dfdTotalSize: u32 = dfdTotalSize_rdr.read_u32::<LittleEndian>()?;
         // println!("dfdByteLength ?= dfdTotalSize : {:?}", dfdByteLength == dfdTotalSize);
         let mut dfd_rdr0 = Cursor::new(&buffer[dfdByteOffset as usize +4..dfdByteOffset as usize +8]);
         let mut dfd_rdr1 = Cursor::new(&buffer[dfdByteOffset as usize +8..dfdByteOffset as usize +12]);
@@ -528,7 +532,7 @@ impl TextureKtx2 {
             row_3: DFDSampleType_rdr3.read_u32::<LittleEndian>().unwrap()
         };
         dfd.samples.push(sample);
-        TextureKtx2 {
+        Ok(TextureKtx2 {
             identifier: [
                 0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
             ],
@@ -576,7 +580,7 @@ impl TextureKtx2 {
             supercompressionGlobalData: vec![0u8; 0],
             levelImages: buffer[levels[0].byteOffset as usize..].to_vec(),
             levels: levels
-        }
+        })
     }
 
     pub fn vertical_sample(image: &mut TextureKtx2, new_height: u32, filter: &mut Filter) -> TextureKtx2 {
