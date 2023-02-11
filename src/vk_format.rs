@@ -1,7 +1,7 @@
 use std::panic;
 
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 #[repr(u32)]
 pub enum VkFormat {
     UNDEFINED = 0,
@@ -281,7 +281,7 @@ pub enum VkFormat {
 }
 
 #[inline(always)]
-pub fn get_format_type_size_bytes(format: VkFormat) -> u32 {
+pub const fn get_format_type_size_bytes(format: VkFormat) -> u32 {
     match format {
         VkFormat::R16_SFLOAT => 2,
         VkFormat::R8G8B8A8_UNORM => 4,

@@ -11,6 +11,7 @@ use half::f16;
 use std::f32;
 
 use crate::dfd::DFDSampleType;
+use crate::pixel::Pixel;
 use crate::vk_format::*;
 use crate::header::Header;
 use crate::index::Index;
@@ -132,29 +133,32 @@ impl TextureKtx2 {
         texture
     }
 
-    pub fn read_f16(&self, x: u32, y: u32) -> f16 {
-        let index: usize = (x as usize) * 2 as usize + (self.header.pixel_width as usize) * (y as usize) * 2 as usize;
-        let mut a: [u8; 2] = [0,0];
-        a[0] = self.level_images[index];
-        a[1] = self.level_images[index+1];
-        let value = half::f16::from_le_bytes(a);
-        value
+    pub fn read_pixel(&self, x: u32, y: u32) -> Pixel {
+        let type_size = self.header.type_size as usize;
+        let index: usize = (x as usize) * type_size + (self.header.pixel_width as usize) * (y as usize) * type_size;
+        match self.header.vk_format {
+            VkFormat::R16_SFLOAT => {
+                let mut a: [u8; 2] = [0,0];
+                a[0] = self.level_images[index];
+                a[1] = self.level_images[index+1];
+                let value = half::f16::from_le_bytes(a);
+                return Pixel::F16(value);
+            },
+            _ => panic!("Unsupported vk_format {:?}", self.header.vk_format)
+        };
     }
 
-    pub fn write_f16(&mut self, x: u32, y: u32, value: f16) {
-        let index: usize = (x as usize) * 2usize + (self.header.pixel_width as usize) * (y as usize) * 2usize;
+    pub fn write_pixel(&mut self, x: u32, y: u32, pixel: Pixel) { // TODO check format and Pixel format
+        let type_size = self.header.type_size as usize;
+        let index: usize = (x as usize) * type_size + (self.header.pixel_width as usize) * (y as usize) * type_size;
         let mut data = vec![];
-        data.write_u16::<LittleEndian>(f16::to_bits(value)).unwrap();
-        self.level_images[index] = data[0];
-        self.level_images[index + 1] = data[1];
-    }
-
-    pub fn write_pixel(&mut self, x: u32, y: u32, pixel: &[u8; 4]) {
-        let index: usize = (x as usize) * 4usize + (self.header.pixel_width as usize) * (y as usize) * 4usize;
-        self.level_images[index] = pixel[0];
-        self.level_images[index + 1] = pixel[1];
-        self.level_images[index + 2] = pixel[2];
-        self.level_images[index + 3] = pixel[3];
+        match pixel {
+            Pixel::F16(value) => {
+                data.write_u16::<LittleEndian>(f16::to_bits(value)).unwrap();
+                self.level_images[index] = data[0];
+                self.level_images[index + 1] = data[1];
+            },
+        }
     }
 
     pub fn write_to_ktx2(&mut self, file_name: &str) -> io::Result<()> {
@@ -412,7 +416,10 @@ impl TextureKtx2 {
                 let mut t = 0.0f32;
     
                 for (i, w) in ws.iter().enumerate() {
-                    let p = half::f16::to_f32(image.read_f16(x, left + i as u32));
+                    let pixel = image.read_pixel(x, left + i as u32);
+                    let p = match pixel {
+                        Pixel::F16(p) => half::f16::to_f32(p),
+                    };
                     let k1 = p;
                     t += k1 * w;
                 }
@@ -420,7 +427,7 @@ impl TextureKtx2 {
                 let t1 = t / sum;
                 let t = half::f16::from_f32(clamp(t1, 0.0, max));
     
-                out.write_f16(x, outy, t);
+                out.write_pixel(x, outy, Pixel::F16(t));
             }
         }
         out
@@ -474,7 +481,10 @@ impl TextureKtx2 {
                 let mut t = 0.0;
     
                 for (i, w) in ws.iter().enumerate() {
-                    let p = half::f16::to_f32(image.read_f16(left + i as u32, y));
+                    let pixel = image.read_pixel(left + i as u32, y);
+                    let p = match pixel {
+                        Pixel::F16(p) => half::f16::to_f32(p),
+                    };
                     let k1 = p;
                     t += k1 * w;
                 }
@@ -482,7 +492,7 @@ impl TextureKtx2 {
                 let t1 = t / sum;
                 let t = half::f16::from_f32(clamp(t1, 0.0, max));
     
-                out.write_f16(outx, y, t);
+                out.write_pixel(outx, y, Pixel::F16(t));
             }
         }
         out
