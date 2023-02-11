@@ -4,13 +4,13 @@ use crate::vk_format::VkFormat;
 #[repr(C)]
 pub(crate) struct Header {
     pub identifier: [u8; 12],
-    pub vkFormat: VkFormat,
-    pub typeSize: u32,
-    pub pixelWidth: u32,
-    pub pixelHeight: u32,
-    pub pixelDepth: u32,
-    pub layerCount: u32,
-    pub faceCount: u32,
-    pub levelCount: u32,
-    pub supercompressionScheme: u32,
+    pub vk_format: VkFormat,
+    pub type_size: u32,
+    pub pixel_width: u32,
+    pub pixel_height: u32,
+    pub pixel_depth: u32,
+    pub layer_count: u32,
+    pub face_count: u32,
+    pub level_count: u32,
+    pub supercompression_scheme: u32,
 }

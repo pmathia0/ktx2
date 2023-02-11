@@ -1,6 +1,3 @@
-#![allow(non_snake_case)]
-#![allow(non_camel_case_types)]
-
 extern crate byteorder;
 extern crate anyhow;
 
@@ -30,57 +27,57 @@ pub struct TextureKtx2 {
     index: Index,
 
     // Data Format Descriptor 
-    pub dfdTotalSize: u32,
-    pub dfDescriptorBlock: Vec<BasicDataFormatDescriptor>,
+    pub dfd_total_size: u32,
+    pub dfd_descriptor_block: Vec<BasicDataFormatDescriptor>,
 
     // Key/Value Data 
-    pub keyAndValueData: [u8; 52],
+    pub key_value_data: [u8; 52],
 
     // Supercompression Global Data 
-    pub supercompressionGlobalData: Vec<u8>,
+    pub supercompression_global_data: Vec<u8>,
 
     // Mip Level Array 
-    pub levelImages: Vec<u8>
+    pub level_images: Vec<u8>
 }
 
 impl TextureKtx2 {
 
     pub fn new(width: u32, height: u32, format: VkFormat) -> Self {
-        let typeSize = get_format_type_size_bytes(format);
+        let type_size = get_format_type_size_bytes(format);
 
         let mut texture = TextureKtx2 {
             header: Header {
                 identifier: [
                     0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
                 ],
-                vkFormat: format,
-                typeSize,
-                pixelWidth: width,
-                pixelHeight: height,
-                pixelDepth: 0,
-                layerCount: 0,
-                faceCount: 1,
-                levelCount: 1,
-                supercompressionScheme: 0,
+                vk_format: format,
+                type_size,
+                pixel_width: width,
+                pixel_height: height,
+                pixel_depth: 0,
+                layer_count: 0,
+                face_count: 1,
+                level_count: 1,
+                supercompression_scheme: 0,
             },
             index: Index {
                 // Index 
-                dfdByteOffset: 104u32,
-                dfdByteLength: 44u32,
-                kvdByteOffset: 148u32,
-                kvdByteLength: 52u32,
-                sgdByteOffset: 0u64,
-                sgdByteLength: 0u64,
+                dfd_byte_offset: 104u32,
+                dfd_byte_length: 44u32,
+                kvd_byte_offset: 148u32,
+                kvd_byte_length: 52u32,
+                sgd_byte_offset: 0u64,
+                sgd_byte_length: 0u64,
                 // Level Index 
                 levels: Vec::new(),
             },
 
             // Data Format Descriptor 
-            dfdTotalSize: 44u32,
-            dfDescriptorBlock: Vec::new(),
+            dfd_total_size: 44u32,
+            dfd_descriptor_block: Vec::new(),
 
             // Key/Value Data 
-            keyAndValueData: [
+            key_value_data: [
                 0x12, 0x00, 0x00, 0x00, // 18 bytes for first entry
                 0x4B, 0x54, 0x58, 0x6F, // KTXo
                 0x72, 0x69, 0x65, 0x6E, // rien
@@ -97,17 +94,17 @@ impl TextureKtx2 {
             ],
             
             // Supercompression Global Data 
-            supercompressionGlobalData: Vec::new(),
+            supercompression_global_data: Vec::new(),
 
             // Mip Level Array 
-            levelImages: Vec::new()
+            level_images: Vec::new()
         };
         texture.index.levels.resize(1, Level {
-            byteOffset: 200u64,
-            byteLength: (width*height*typeSize) as u64,
-            uncompressedByteLength: (width*height*typeSize) as u64
+            byte_offset: 200u64,
+            byte_length: (width*height*type_size) as u64,
+            uncompressed_byte_length: (width*height*type_size) as u64
         });
-        texture.dfDescriptorBlock.resize(1, BasicDataFormatDescriptor {
+        texture.dfd_descriptor_block.resize(1, BasicDataFormatDescriptor {
             row_0: 0u32,
             row_1: 0u32,
             row_2: 0u32,
@@ -116,48 +113,48 @@ impl TextureKtx2 {
             row_5: 0u32,
             samples: Vec::new()
         });
-        texture.dfDescriptorBlock[0].row_0 = 0u32;
-        texture.dfDescriptorBlock[0].row_1 = 2 << 0  | 40 << 16;
-        texture.dfDescriptorBlock[0].row_2 = 1 << 0 | 1 << 8 | 1 << 16 | 0 << 24;
-        texture.dfDescriptorBlock[0].row_3 = 0u32;
-        texture.dfDescriptorBlock[0].row_4 = 2u32;
-        texture.dfDescriptorBlock[0].row_5 = 0u32;
-        texture.dfDescriptorBlock[0].samples.resize(1, DFDSampleType {
+        texture.dfd_descriptor_block[0].row_0 = 0u32;
+        texture.dfd_descriptor_block[0].row_1 = 2 << 0  | 40 << 16;
+        texture.dfd_descriptor_block[0].row_2 = 1 << 0 | 1 << 8 | 1 << 16 | 0 << 24;
+        texture.dfd_descriptor_block[0].row_3 = 0u32;
+        texture.dfd_descriptor_block[0].row_4 = 2u32;
+        texture.dfd_descriptor_block[0].row_5 = 0u32;
+        texture.dfd_descriptor_block[0].samples.resize(1, DFDSampleType {
             row_0: 0u32,
             row_1: 0u32,
             row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
             row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
         });
-        texture.dfDescriptorBlock[0].samples[0].row_0 = 0 << 0 | 15 << 16 | 0b11000000 << 24;
+        texture.dfd_descriptor_block[0].samples[0].row_0 = 0 << 0 | 15 << 16 | 0b11000000 << 24;
         
-        texture.supercompressionGlobalData.resize(0, 0x00);
-        texture.levelImages.resize(texture.index.levels[0].byteLength as usize, 0x00);
+        texture.supercompression_global_data.resize(0, 0x00);
+        texture.level_images.resize(texture.index.levels[0].byte_length as usize, 0x00);
         texture
     }
 
     pub fn read_f16(&self, x: u32, y: u32) -> f16 {
-        let index: usize = (x as usize) * 2 as usize + (self.header.pixelWidth as usize) * (y as usize) * 2 as usize;
+        let index: usize = (x as usize) * 2 as usize + (self.header.pixel_width as usize) * (y as usize) * 2 as usize;
         let mut a: [u8; 2] = [0,0];
-        a[0] = self.levelImages[index];
-        a[1] = self.levelImages[index+1];
+        a[0] = self.level_images[index];
+        a[1] = self.level_images[index+1];
         let value = half::f16::from_le_bytes(a);
         value
     }
 
     pub fn write_f16(&mut self, x: u32, y: u32, value: f16) {
-        let index: usize = (x as usize) * 2usize + (self.header.pixelWidth as usize) * (y as usize) * 2usize;
+        let index: usize = (x as usize) * 2usize + (self.header.pixel_width as usize) * (y as usize) * 2usize;
         let mut data = vec![];
         data.write_u16::<LittleEndian>(f16::to_bits(value)).unwrap();
-        self.levelImages[index] = data[0];
-        self.levelImages[index + 1] = data[1];
+        self.level_images[index] = data[0];
+        self.level_images[index + 1] = data[1];
     }
 
     pub fn write_pixel(&mut self, x: u32, y: u32, pixel: &[u8; 4]) {
-        let index: usize = (x as usize) * 4usize + (self.header.pixelWidth as usize) * (y as usize) * 4usize;
-        self.levelImages[index] = pixel[0];
-        self.levelImages[index + 1] = pixel[1];
-        self.levelImages[index + 2] = pixel[2];
-        self.levelImages[index + 3] = pixel[3];
+        let index: usize = (x as usize) * 4usize + (self.header.pixel_width as usize) * (y as usize) * 4usize;
+        self.level_images[index] = pixel[0];
+        self.level_images[index + 1] = pixel[1];
+        self.level_images[index + 2] = pixel[2];
+        self.level_images[index + 3] = pixel[3];
     }
 
     pub fn write_to_ktx2(&mut self, file_name: &str) -> io::Result<()> {
@@ -165,38 +162,38 @@ impl TextureKtx2 {
         buffer.write_all(&self.header.identifier)?;
 
         let mut header = vec![];
-        header.write_u32::<LittleEndian>(self.header.vkFormat as u32).unwrap();
-        header.write_u32::<LittleEndian>(self.header.typeSize).unwrap();
-        header.write_u32::<LittleEndian>(self.header.pixelWidth).unwrap();
-        header.write_u32::<LittleEndian>(self.header.pixelHeight).unwrap();
-        header.write_u32::<LittleEndian>(self.header.pixelDepth).unwrap();
-        header.write_u32::<LittleEndian>(self.header.layerCount).unwrap();
-        header.write_u32::<LittleEndian>(self.header.faceCount).unwrap();
-        header.write_u32::<LittleEndian>(self.header.levelCount).unwrap();
-        header.write_u32::<LittleEndian>(self.header.supercompressionScheme).unwrap();
+        header.write_u32::<LittleEndian>(self.header.vk_format as u32).unwrap();
+        header.write_u32::<LittleEndian>(self.header.type_size).unwrap();
+        header.write_u32::<LittleEndian>(self.header.pixel_width).unwrap();
+        header.write_u32::<LittleEndian>(self.header.pixel_height).unwrap();
+        header.write_u32::<LittleEndian>(self.header.pixel_depth).unwrap();
+        header.write_u32::<LittleEndian>(self.header.layer_count).unwrap();
+        header.write_u32::<LittleEndian>(self.header.face_count).unwrap();
+        header.write_u32::<LittleEndian>(self.header.level_count).unwrap();
+        header.write_u32::<LittleEndian>(self.header.supercompression_scheme).unwrap();
         buffer.write_all(&header)?;
         
         let mut index = vec![];
-        index.write_u32::<LittleEndian>(self.index.dfdByteOffset).unwrap();
-        index.write_u32::<LittleEndian>(self.index.dfdByteLength).unwrap();
-        index.write_u32::<LittleEndian>(self.index.kvdByteOffset).unwrap();
-        index.write_u32::<LittleEndian>(self.index.kvdByteLength).unwrap();
-        index.write_u64::<LittleEndian>(self.index.sgdByteOffset).unwrap();
-        index.write_u64::<LittleEndian>(self.index.sgdByteLength).unwrap();
+        index.write_u32::<LittleEndian>(self.index.dfd_byte_offset).unwrap();
+        index.write_u32::<LittleEndian>(self.index.dfd_byte_length).unwrap();
+        index.write_u32::<LittleEndian>(self.index.kvd_byte_offset).unwrap();
+        index.write_u32::<LittleEndian>(self.index.kvd_byte_length).unwrap();
+        index.write_u64::<LittleEndian>(self.index.sgd_byte_offset).unwrap();
+        index.write_u64::<LittleEndian>(self.index.sgd_byte_length).unwrap();
         buffer.write_all(&index)?;
 
         let mut levels = vec![];
         for level in &self.index.levels {
-            levels.write_u64::<LittleEndian>(level.byteOffset).unwrap();
-            levels.write_u64::<LittleEndian>(level.byteLength).unwrap();
-            levels.write_u64::<LittleEndian>(level.uncompressedByteLength).unwrap();
+            levels.write_u64::<LittleEndian>(level.byte_offset).unwrap();
+            levels.write_u64::<LittleEndian>(level.byte_length).unwrap();
+            levels.write_u64::<LittleEndian>(level.uncompressed_byte_length).unwrap();
         }
         buffer.write_all(&levels)?;
 
         let mut dfd_size = vec![];
-        dfd_size.write_u32::<LittleEndian>(self.dfdTotalSize).unwrap();
+        dfd_size.write_u32::<LittleEndian>(self.dfd_total_size).unwrap();
         buffer.write_all(&dfd_size)?;
-        for descriptor in &self.dfDescriptorBlock {
+        for descriptor in &self.dfd_descriptor_block {
             let mut dfd = vec![];
             dfd.write_u32::<LittleEndian>(descriptor.row_0).unwrap();
             dfd.write_u32::<LittleEndian>(descriptor.row_1).unwrap();
@@ -214,10 +211,10 @@ impl TextureKtx2 {
                 buffer.write_all(&spl)?;
             }
         }
-        buffer.write_all(&self.keyAndValueData)?;
+        buffer.write_all(&self.key_value_data)?;
 
-        buffer.write_all(&self.supercompressionGlobalData)?;
-        buffer.write_all(&self.levelImages)?;
+        buffer.write_all(&self.supercompression_global_data)?;
+        buffer.write_all(&self.level_images)?;
         Ok(())
     }
     
@@ -228,85 +225,85 @@ impl TextureKtx2 {
         let mut buffer: Vec<u8> = vec![];
         file.read_to_end(&mut buffer)?;
         
-        let mut vkFormat_rdr = Cursor::new(&buffer[12..16]);
-        let vkFormat: VkFormat = unsafe { std::mem::transmute(vkFormat_rdr.read_u32::<LittleEndian>().unwrap()) };
+        let mut vk_format_rdr = Cursor::new(&buffer[12..16]);
+        let vk_format: VkFormat = unsafe { std::mem::transmute(vk_format_rdr.read_u32::<LittleEndian>().unwrap()) };
         // println!("vkFormat: {:?}", vkFormat);
-        let mut typeSize_rdr = Cursor::new(&buffer[16..20]);
-        let typeSize: u32 = typeSize_rdr.read_u32::<LittleEndian>()?;
+        let mut type_size_rdr = Cursor::new(&buffer[16..20]);
+        let type_size: u32 = type_size_rdr.read_u32::<LittleEndian>()?;
         // println!("typeSize: {:?}", typeSize);
-        let mut pixelWidth_rdr = Cursor::new(&buffer[20..24]);
-        let pixelWidth: u32 = pixelWidth_rdr.read_u32::<LittleEndian>()?;
+        let mut pixel_width_rdr = Cursor::new(&buffer[20..24]);
+        let pixel_width: u32 = pixel_width_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelWidth: {:?}", pixelWidth);
-        let mut pixelHeight_rdr = Cursor::new(&buffer[24..28]);
-        let pixelHeight: u32 = pixelHeight_rdr.read_u32::<LittleEndian>()?;
+        let mut pixel_height_rdr = Cursor::new(&buffer[24..28]);
+        let pixel_height: u32 = pixel_height_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelHeight: {:?}", pixelHeight);
-        let mut pixelDepth_rdr = Cursor::new(&buffer[28..32]);
-        let pixelDepth: u32 = pixelDepth_rdr.read_u32::<LittleEndian>()?;
+        let mut pixel_depth_rdr = Cursor::new(&buffer[28..32]);
+        let pixel_depth: u32 = pixel_depth_rdr.read_u32::<LittleEndian>()?;
         // println!("pixelDepth: {:?}", pixelDepth);
-        let mut layerCount_rdr = Cursor::new(&buffer[32..36]);
-        let layerCount: u32 = layerCount_rdr.read_u32::<LittleEndian>()?;
+        let mut layer_count_rdr = Cursor::new(&buffer[32..36]);
+        let layer_count: u32 = layer_count_rdr.read_u32::<LittleEndian>()?;
         // println!("layerCount: {:?}", layerCount);
-        let mut faceCount_rdr = Cursor::new(&buffer[36..40]);
-        let faceCount: u32 = faceCount_rdr.read_u32::<LittleEndian>()?;
+        let mut face_count_rdr = Cursor::new(&buffer[36..40]);
+        let face_count: u32 = face_count_rdr.read_u32::<LittleEndian>()?;
         // println!("faceCount: {:?}", faceCount);
-        let mut levelCount_rdr = Cursor::new(&buffer[40..44]);
-        let levelCount: u32 = levelCount_rdr.read_u32::<LittleEndian>()?;
+        let mut level_count_rdr = Cursor::new(&buffer[40..44]);
+        let level_count: u32 = level_count_rdr.read_u32::<LittleEndian>()?;
         // println!("levelCount: {:?}", levelCount);
-        let mut supercompressionScheme_rdr = Cursor::new(&buffer[44..48]);
-        let supercompressionScheme: u32 = supercompressionScheme_rdr.read_u32::<LittleEndian>()?;
+        let mut supercompression_scheme_rdr = Cursor::new(&buffer[44..48]);
+        let supercompression_scheme: u32 = supercompression_scheme_rdr.read_u32::<LittleEndian>()?;
         // println!("supercompressionScheme: {:?}", supercompressionScheme);
-        let mut dfdByteOffset_rdr = Cursor::new(&buffer[48..52]);
-        let dfdByteOffset: u32 = dfdByteOffset_rdr.read_u32::<LittleEndian>()?;
+        let mut dfd_byte_offset_rdr = Cursor::new(&buffer[48..52]);
+        let dfd_byte_offset: u32 = dfd_byte_offset_rdr.read_u32::<LittleEndian>()?;
         // println!("dfdByteOffset: {:?}", dfdByteOffset);
-        let mut dfdByteLength_rdr = Cursor::new(&buffer[52..56]);
-        let dfdByteLength: u32 = dfdByteLength_rdr.read_u32::<LittleEndian>()?;
+        let mut dfd_byte_length_rdr = Cursor::new(&buffer[52..56]);
+        let dfd_byte_length: u32 = dfd_byte_length_rdr.read_u32::<LittleEndian>()?;
         // println!("dfdByteLength: {:?}", dfdByteLength);
-        let mut kvdByteOffset_rdr = Cursor::new(&buffer[56..60]);
-        let kvdByteOffset: u32 = kvdByteOffset_rdr.read_u32::<LittleEndian>()?;
+        let mut kvd_byte_offset_rdr = Cursor::new(&buffer[56..60]);
+        let kvd_byte_offset: u32 = kvd_byte_offset_rdr.read_u32::<LittleEndian>()?;
         // println!("kvdByteOffset: {:?}", kvdByteOffset);
-        let mut kvdByteLength_rdr = Cursor::new(&buffer[60..64]);
-        let kvdByteLength: u32 = kvdByteLength_rdr.read_u32::<LittleEndian>()?;
+        let mut kvd_byte_length_rdr = Cursor::new(&buffer[60..64]);
+        let kvd_byte_length: u32 = kvd_byte_length_rdr.read_u32::<LittleEndian>()?;
         // println!("kvdByteLength: {:?}", kvdByteLength);
-        let mut sgdByteOffset_rdr = Cursor::new(&buffer[64..72]);
-        let sgdByteOffset: u64 = sgdByteOffset_rdr.read_u64::<LittleEndian>()?;
+        let mut sgd_byte_offset_rdr = Cursor::new(&buffer[64..72]);
+        let sgd_byte_offset: u64 = sgd_byte_offset_rdr.read_u64::<LittleEndian>()?;
         // println!("sgdByteOffset: {:?}", sgdByteOffset);
-        let mut sgdByteLength_rdr = Cursor::new(&buffer[72..80]);
-        let sgdByteLength: u64 = sgdByteLength_rdr.read_u64::<LittleEndian>()?;
+        let mut sgd_byte_length_rdr = Cursor::new(&buffer[72..80]);
+        let sgd_byte_length: u64 = sgd_byte_length_rdr.read_u64::<LittleEndian>()?;
         // println!("sgdByteLength: {:?}", sgdByteLength);
 
         // read level info
         let mut levels: Vec<Level> = vec![];
-        for l in 0..levelCount {
+        for l in 0..level_count {
             // println!("Level {:?}", l);
-            let mut byteOffset_rdr = Cursor::new(&buffer[80+l as usize*8..88+l as usize*8]);
-            let mut byteLength_rdr = Cursor::new(&buffer[88+l as usize *8..96+l as usize *8]);
-            let mut uncompressedByteLength_rdr = Cursor::new(&buffer[96+l as usize *8..104+l as usize *8]);
+            let mut byte_offset_rdr = Cursor::new(&buffer[80+l as usize*8..88+l as usize*8]);
+            let mut byte_length_rdr = Cursor::new(&buffer[88+l as usize *8..96+l as usize *8]);
+            let mut uncompressed_byte_length_rdr = Cursor::new(&buffer[96+l as usize *8..104+l as usize *8]);
 
-            let byteOffset: u64 = byteOffset_rdr.read_u64::<LittleEndian>()?;
-            let byteLength: u64 = byteLength_rdr.read_u64::<LittleEndian>()?;
-            let uncompressedByteLength: u64 = uncompressedByteLength_rdr.read_u64::<LittleEndian>()?;
+            let byte_offset: u64 = byte_offset_rdr.read_u64::<LittleEndian>()?;
+            let byte_length: u64 = byte_length_rdr.read_u64::<LittleEndian>()?;
+            let uncompressed_byte_length: u64 = uncompressed_byte_length_rdr.read_u64::<LittleEndian>()?;
             
-            // println!("\tbyteOffset: {:?}", byteOffset);
-            // println!("\tbyteLength: {:?}", byteLength);
-            // println!("\tuncompressedByteLength: {:?}", uncompressedByteLength);
+            // println!("\tbyte_offset: {:?}", byte_offset);
+            // println!("\tbyte_length: {:?}", _byte_length);
+            // println!("\tuncompressed_byte_length: {:?}", uncompressed_byte_length);
 
             levels.push(Level {
-                byteOffset: byteOffset,
-                byteLength: byteLength,
-                uncompressedByteLength: uncompressedByteLength 
+                byte_offset: byte_offset,
+                byte_length: byte_length,
+                uncompressed_byte_length: uncompressed_byte_length 
             });
         }
 
         // read DFD (assuming only 1)
-        let mut dfdTotalSize_rdr = Cursor::new(&buffer[dfdByteOffset as usize..dfdByteOffset as usize +4]);
-        let dfdTotalSize: u32 = dfdTotalSize_rdr.read_u32::<LittleEndian>()?;
-        // println!("dfdByteLength ?= dfdTotalSize : {:?}", dfdByteLength == dfdTotalSize);
-        let mut dfd_rdr0 = Cursor::new(&buffer[dfdByteOffset as usize +4..dfdByteOffset as usize +8]);
-        let mut dfd_rdr1 = Cursor::new(&buffer[dfdByteOffset as usize +8..dfdByteOffset as usize +12]);
-        let mut dfd_rdr2 = Cursor::new(&buffer[dfdByteOffset as usize +12..dfdByteOffset as usize +16]);
-        let mut dfd_rdr3 = Cursor::new(&buffer[dfdByteOffset as usize +16..dfdByteOffset as usize +20]);
-        let mut dfd_rdr4 = Cursor::new(&buffer[dfdByteOffset as usize +20..dfdByteOffset as usize +24]);
-        let mut dfd_rdr5 = Cursor::new(&buffer[dfdByteOffset as usize +24..dfdByteOffset as usize +28]);
+        let mut dfd_total_size_rdr = Cursor::new(&buffer[dfd_byte_offset as usize..dfd_byte_offset as usize +4]);
+        let dfd_total_size: u32 = dfd_total_size_rdr.read_u32::<LittleEndian>()?;
+        // println!("dfdByteLength ?= dfd_total_size : {:?}", dfdByteLength == dfd_total_size);
+        let mut dfd_rdr0 = Cursor::new(&buffer[dfd_byte_offset as usize +4..dfd_byte_offset as usize +8]);
+        let mut dfd_rdr1 = Cursor::new(&buffer[dfd_byte_offset as usize +8..dfd_byte_offset as usize +12]);
+        let mut dfd_rdr2 = Cursor::new(&buffer[dfd_byte_offset as usize +12..dfd_byte_offset as usize +16]);
+        let mut dfd_rdr3 = Cursor::new(&buffer[dfd_byte_offset as usize +16..dfd_byte_offset as usize +20]);
+        let mut dfd_rdr4 = Cursor::new(&buffer[dfd_byte_offset as usize +20..dfd_byte_offset as usize +24]);
+        let mut dfd_rdr5 = Cursor::new(&buffer[dfd_byte_offset as usize +24..dfd_byte_offset as usize +28]);
         let mut dfd = BasicDataFormatDescriptor {
             row_0: dfd_rdr0.read_u32::<LittleEndian>().unwrap(),
             row_1: dfd_rdr1.read_u32::<LittleEndian>().unwrap(),
@@ -317,15 +314,15 @@ impl TextureKtx2 {
             samples: vec![]
         };
         // read DFDSampleType (assuming 1)
-        let mut DFDSampleType_rdr0 = Cursor::new(&buffer[dfdByteOffset as usize +28..dfdByteOffset as usize +32]);
-        let mut DFDSampleType_rdr1 = Cursor::new(&buffer[dfdByteOffset as usize +32..dfdByteOffset as usize +36]);
-        let mut DFDSampleType_rdr2 = Cursor::new(&buffer[dfdByteOffset as usize +36..dfdByteOffset as usize +40]);
-        let mut DFDSampleType_rdr3 = Cursor::new(&buffer[dfdByteOffset as usize +40..dfdByteOffset as usize +44]);
+        let mut dfd_sample_type_rdr0 = Cursor::new(&buffer[dfd_byte_offset as usize +28..dfd_byte_offset as usize +32]);
+        let mut dfd_sample_type_rdr1 = Cursor::new(&buffer[dfd_byte_offset as usize +32..dfd_byte_offset as usize +36]);
+        let mut dfd_sample_type_rdr2 = Cursor::new(&buffer[dfd_byte_offset as usize +36..dfd_byte_offset as usize +40]);
+        let mut dfd_sample_type_rdr3 = Cursor::new(&buffer[dfd_byte_offset as usize +40..dfd_byte_offset as usize +44]);
         let sample = DFDSampleType {
-            row_0: DFDSampleType_rdr0.read_u32::<LittleEndian>().unwrap(),
-            row_1: DFDSampleType_rdr1.read_u32::<LittleEndian>().unwrap(),
-            row_2: DFDSampleType_rdr2.read_u32::<LittleEndian>().unwrap(),
-            row_3: DFDSampleType_rdr3.read_u32::<LittleEndian>().unwrap()
+            row_0: dfd_sample_type_rdr0.read_u32::<LittleEndian>().unwrap(),
+            row_1: dfd_sample_type_rdr1.read_u32::<LittleEndian>().unwrap(),
+            row_2: dfd_sample_type_rdr2.read_u32::<LittleEndian>().unwrap(),
+            row_3: dfd_sample_type_rdr3.read_u32::<LittleEndian>().unwrap()
         };
         dfd.samples.push(sample);
         Ok(TextureKtx2 {
@@ -333,20 +330,20 @@ impl TextureKtx2 {
                 identifier: [
                     0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
                 ],
-                vkFormat: vkFormat,
-                typeSize: typeSize,
-                pixelWidth: pixelWidth,
-                pixelHeight: pixelHeight,
-                pixelDepth: pixelDepth,
-                layerCount: layerCount,
-                faceCount: faceCount,
-                levelCount: levelCount,
-                supercompressionScheme: supercompressionScheme,
+                vk_format,
+                type_size,
+                pixel_width,
+                pixel_height,
+                pixel_depth,
+                layer_count,
+                face_count,
+                level_count,
+                supercompression_scheme,
             },
             
-            dfdTotalSize: dfdTotalSize,
-            dfDescriptorBlock: vec![dfd],
-            keyAndValueData: [
+            dfd_total_size: dfd_total_size,
+            dfd_descriptor_block: vec![dfd],
+            key_value_data: [
                 0x12, 0x00, 0x00, 0x00, // 18 bytes for first entry
                 0x4B, 0x54, 0x58, 0x6F, // KTXo
                 0x72, 0x69, 0x65, 0x6E, // rien
@@ -361,24 +358,24 @@ impl TextureKtx2 {
                 0x53, 0x4b, 0x59, 0x5f, // SKY_
                 0x64, 0x74, 0x32, 0x00, // dt2 NULL
                 ],
-            supercompressionGlobalData: vec![0u8; 0],
-            levelImages: buffer[levels[0].byteOffset as usize..].to_vec(),
+            supercompression_global_data: vec![0u8; 0],
+            level_images: buffer[levels[0].byte_offset as usize..].to_vec(),
             index: Index {
-                dfdByteOffset: dfdByteOffset,
-                dfdByteLength: dfdByteLength,
-                kvdByteOffset: kvdByteOffset,
-                kvdByteLength: kvdByteLength,
-                sgdByteOffset: sgdByteOffset,
-                sgdByteLength: sgdByteLength,
+                dfd_byte_offset,
+                dfd_byte_length,
+                kvd_byte_offset: kvd_byte_offset,
+                kvd_byte_length: kvd_byte_length,
+                sgd_byte_offset: sgd_byte_offset,
+                sgd_byte_length: sgd_byte_length,
                 levels: levels
             },            
         })
     }
 
     pub fn vertical_sample(image: &mut TextureKtx2, new_height: u32, filter: &mut Filter) -> TextureKtx2 {
-        let width = image.header.pixelWidth;
-        let height = image.header.pixelHeight;
-        let mut out: TextureKtx2 = TextureKtx2::new(width, new_height, image.header.vkFormat);
+        let width = image.header.pixel_width;
+        let height = image.header.pixel_height;
+        let mut out: TextureKtx2 = TextureKtx2::new(width, new_height, image.header.vk_format);
         let mut ws: Vec<f32> = Vec::new();
         
         let max: f32 = half::f16::to_f32(half::f16::MAX);
@@ -430,9 +427,9 @@ impl TextureKtx2 {
     }
 
     pub fn horizontal_sample(image: &mut TextureKtx2, new_width: u32, filter: &mut Filter) -> TextureKtx2 {
-        let width = image.header.pixelWidth;
-        let height = image.header.pixelHeight;
-        let mut out: TextureKtx2 = TextureKtx2::new(new_width, height, image.header.vkFormat);
+        let width = image.header.pixel_width;
+        let height = image.header.pixel_height;
+        let mut out: TextureKtx2 = TextureKtx2::new(new_width, height, image.header.vk_format);
         let mut ws: Vec<f32> = Vec::new();
         
         let max: f32 = half::f16::to_f32(half::f16::MAX);
