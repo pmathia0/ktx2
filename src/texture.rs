@@ -14,7 +14,7 @@ use half::f16;
 use std::f32;
 
 use crate::vk_format::VkFormat;
-use crate::vk_format::get_format_type_size;
+use crate::vk_format::get_format_type_size_bytes;
 
 #[derive(Clone)]
 #[repr(C)]
@@ -72,7 +72,7 @@ pub struct TextureKtx2 {
     pub dfDescriptorBlock: Vec<BasicDataFormatDescriptor>,
 
     // Key/Value Data 
-    pub keyAndValueData: [u8; 76],
+    pub keyAndValueData: [u8; 52],
 
     // Supercompression Global Data 
     pub supercompressionGlobalData: Vec<u8>,
@@ -148,7 +148,7 @@ where
 impl TextureKtx2 {
 
     pub fn new(width: u32, height: u32, format: VkFormat) -> Self {
-        let typeSize = get_format_type_size(format);
+        let typeSize = get_format_type_size_bytes(format);
 
         let mut texture = TextureKtx2 {
             identifier: [
@@ -167,7 +167,7 @@ impl TextureKtx2 {
             dfdByteOffset: 104u32,
             dfdByteLength: 44u32,
             kvdByteOffset: 148u32,
-            kvdByteLength: 76u32,
+            kvdByteLength: 52u32,
             sgdByteOffset: 0u64,
             sgdByteLength: 0u64,
             // Level Index 
@@ -192,12 +192,6 @@ impl TextureKtx2 {
                 0x6e, 0x69, 0x6f, 0x72, // nior 
                 0x53, 0x4b, 0x59, 0x5f, // SKY_
                 0x64, 0x74, 0x32, 0x00, // dt2 NULL
-                0x05, 0x00, 0x00, 0x00, // 5 bytes for third entry
-                0x6d, 0x69, 0x6e, 0x00, // min NULL
-                0x35, 0x00, 0x00, 0x00, // 5 <3 bytes of valuePadding>
-                0x06, 0x00, 0x00, 0x00, // 6 bytes for fourth entry
-                0x6d, 0x61, 0x78, 0x00, // max NULL
-                0x31, 0x35, 0x00, 0x00, // 15 <3 bytes of valuePadding>
             ],
             
             // Supercompression Global Data 
@@ -207,7 +201,7 @@ impl TextureKtx2 {
             levelImages: Vec::new()
         };
         texture.levels.resize(1, Level {
-            byteOffset: 224u64,
+            byteOffset: 200u64,
             byteLength: (width*height*typeSize) as u64,
             uncompressedByteLength: (width*height*typeSize) as u64
         });
@@ -257,7 +251,7 @@ impl TextureKtx2 {
             dfdByteOffset: 104u32,
             dfdByteLength: 44u32,
             kvdByteOffset: 148u32,
-            kvdByteLength: 76u32,
+            kvdByteLength: 52u32,
             sgdByteOffset: 0u64,
             sgdByteLength: 0u64,
             // Level Index 
@@ -282,12 +276,6 @@ impl TextureKtx2 {
                 0x6e, 0x69, 0x6f, 0x72, // nior 
                 0x53, 0x4b, 0x59, 0x5f, // SKY_
                 0x64, 0x74, 0x32, 0x00, // dt2 NULL
-                0x05, 0x00, 0x00, 0x00, // 5 bytes for third entry
-                0x6d, 0x69, 0x6e, 0x00, // min NULL
-                0x35, 0x00, 0x00, 0x00, // 5 <3 bytes of valuePadding>
-                0x06, 0x00, 0x00, 0x00, // 6 bytes for fourth entry
-                0x6d, 0x61, 0x78, 0x00, // max NULL
-                0x31, 0x35, 0x00, 0x00, // 15 <3 bytes of valuePadding>
             ],
             
             // Supercompression Global Data 
@@ -570,12 +558,12 @@ impl TextureKtx2 {
                 0x6e, 0x69, 0x6f, 0x72, // nior 
                 0x53, 0x4b, 0x59, 0x5f, // SKY_
                 0x64, 0x74, 0x32, 0x00, // dt2 NULL
-                0x05, 0x00, 0x00, 0x00, // 5 bytes for third entry
-                0x6d, 0x69, 0x6e, 0x00, // min NULL
-                0x35, 0x00, 0x00, 0x00, // 5 <3 bytes of valuePadding>
-                0x06, 0x00, 0x00, 0x00, // 6 bytes for fourth entry
-                0x6d, 0x61, 0x78, 0x00, // max NULL
-                0x31, 0x35, 0x00, 0x00, // 15 <2 bytes of valuePadding>
+                // 0x05, 0x00, 0x00, 0x00, // 5 bytes for third entry
+                // 0x6d, 0x69, 0x6e, 0x00, // min NULL
+                // 0x35, 0x00, 0x00, 0x00, // 5 <3 bytes of valuePadding>
+                // 0x06, 0x00, 0x00, 0x00, // 6 bytes for fourth entry
+                // 0x6d, 0x61, 0x78, 0x00, // max NULL
+                // 0x31, 0x35, 0x00, 0x00, // 15 <2 bytes of valuePadding>
                 ],
             supercompressionGlobalData: vec![0u8; 0],
             levelImages: buffer[levels[0].byteOffset as usize..].to_vec(),
