@@ -1,5 +1,6 @@
 pub mod texture;
 pub mod vk_format;
+pub mod filter;
 
 #[cfg(test)]
 mod tests {
