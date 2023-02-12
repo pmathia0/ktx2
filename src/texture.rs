@@ -7,6 +7,7 @@ use std::io;
 use std::io::Write;
 use std::io::Read;
 use std::io::Cursor;
+use std::mem::size_of_val;
 use half::f16;
 use std::f32;
 
@@ -46,36 +47,57 @@ impl TextureKtx2 {
     pub fn new(width: u32, height: u32, format: VkFormat) -> Self {
         let type_size = get_format_type_size_bytes(format);
 
-        let mut texture = TextureKtx2 {
-            header: Header {
-                identifier: [
-                    0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
-                ],
-                vk_format: format,
-                type_size,
-                pixel_width: width,
-                pixel_height: height,
-                pixel_depth: 0,
-                layer_count: 0,
-                face_count: 1,
-                level_count: 1,
-                supercompression_scheme: 0,
-            },
-            index: Index {
-                // Index 
-                dfd_byte_offset: 104u32,
-                dfd_byte_length: 44u32,
-                kvd_byte_offset: 148u32,
-                kvd_byte_length: 52u32,
-                sgd_byte_offset: 0u64,
-                sgd_byte_length: 0u64,
-                // Level Index 
-                levels: Vec::new(),
-            },
+        let header = Header {
+            identifier: [
+                0xAB, 0x4B, 0x54, 0x58, 0x20, 0x32, 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
+            ],
+            vk_format: format,
+            type_size,
+            pixel_width: width,
+            pixel_height: height,
+            pixel_depth: 0,
+            layer_count: 0,
+            face_count: 1,
+            level_count: 1,
+            supercompression_scheme: 0,
+        };
+        
+        let (dfd, mut dfd_byte_length) = BasicDataFormatDescriptor::new(format);
+        dfd_byte_length += 4;
+
+        let mut levels = Vec::new();
+        levels.push(Level {
+            byte_offset: 200u64,
+            byte_length: (width*height*type_size) as u64,
+            uncompressed_byte_length: (width*height*type_size) as u64
+        });
+        let byte_length = levels[0].byte_length as usize;
+
+        let index_size = (32 + std::mem::size_of::<Level>() * levels.len()) as u32;
+        let mut index = Index {
+            // Index 
+            dfd_byte_offset: 0,
+            dfd_byte_length,
+            kvd_byte_offset: 148u32,
+            kvd_byte_length: 52u32,
+            sgd_byte_offset: 0u64,
+            sgd_byte_length: 0u64,
+            // Level Index 
+            levels,
+        };
+        let dfd_byte_offset = size_of_val(&header) as u32 + index_size;
+        index.dfd_byte_offset = dfd_byte_offset;
+        index.kvd_byte_offset = dfd_byte_offset + dfd_byte_length;
+        index.sgd_byte_offset = 0;//index.kvd_byte_offset as u64 + 52;
+        index.levels[0].byte_offset = index.kvd_byte_offset as u64 + 52;
+        
+        let texture = TextureKtx2 {
+            header,
+            index,
 
             // Data Format Descriptor 
-            dfd_total_size: 44u32,
-            dfd_descriptor_block: Vec::new(),
+            dfd_total_size: dfd_byte_length,
+            dfd_descriptor_block: vec![dfd],
 
             // Key/Value Data 
             key_value_data: [
@@ -98,38 +120,8 @@ impl TextureKtx2 {
             supercompression_global_data: Vec::new(),
 
             // Mip Level Array 
-            level_images: Vec::new()
+            level_images: vec![0x00; byte_length]
         };
-        texture.index.levels.resize(1, Level {
-            byte_offset: 200u64,
-            byte_length: (width*height*type_size) as u64,
-            uncompressed_byte_length: (width*height*type_size) as u64
-        });
-        texture.dfd_descriptor_block.resize(1, BasicDataFormatDescriptor {
-            row_0: 0u32,
-            row_1: 0u32,
-            row_2: 0u32,
-            row_3: 0u32,
-            row_4: 0u32,
-            row_5: 0u32,
-            samples: Vec::new()
-        });
-        texture.dfd_descriptor_block[0].row_0 = 0u32;
-        texture.dfd_descriptor_block[0].row_1 = 2 << 0  | 40 << 16;
-        texture.dfd_descriptor_block[0].row_2 = 1 << 0 | 1 << 8 | 1 << 16 | 0 << 24;
-        texture.dfd_descriptor_block[0].row_3 = 0u32;
-        texture.dfd_descriptor_block[0].row_4 = 2u32;
-        texture.dfd_descriptor_block[0].row_5 = 0u32;
-        texture.dfd_descriptor_block[0].samples.resize(1, DFDSampleType {
-            row_0: 0u32,
-            row_1: 0u32,
-            row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
-            row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
-        });
-        texture.dfd_descriptor_block[0].samples[0].row_0 = 0 << 0 | 15 << 16 | 0b11000000 << 24;
-        
-        texture.supercompression_global_data.resize(0, 0x00);
-        texture.level_images.resize(texture.index.levels[0].byte_length as usize, 0x00);
         texture
     }
 
@@ -142,7 +134,7 @@ impl TextureKtx2 {
                 a[0] = self.level_images[index];
                 a[1] = self.level_images[index+1];
                 let value = half::f16::from_le_bytes(a);
-                return Pixel::F16(value);
+                return Pixel::R16_SFLOAT(value);
             },
             _ => panic!("Unsupported vk_format {:?}", self.header.vk_format)
         };
@@ -153,11 +145,17 @@ impl TextureKtx2 {
         let index: usize = (x as usize) * type_size + (self.header.pixel_width as usize) * (y as usize) * type_size;
         let mut data = vec![];
         match pixel {
-            Pixel::F16(value) => {
+            Pixel::R16_SFLOAT(value) => {
                 data.write_u16::<LittleEndian>(f16::to_bits(value)).unwrap();
                 self.level_images[index] = data[0];
                 self.level_images[index + 1] = data[1];
             },
+            Pixel::R8G8B8A8_UINT(data) => {
+                self.level_images[index] = data[0];
+                self.level_images[index + 1] = data[1];
+                self.level_images[index + 2] = data[2];
+                self.level_images[index + 3] = data[3];
+            }
         }
     }
 
@@ -418,7 +416,8 @@ impl TextureKtx2 {
                 for (i, w) in ws.iter().enumerate() {
                     let pixel = image.read_pixel(x, left + i as u32);
                     let p = match pixel {
-                        Pixel::F16(p) => half::f16::to_f32(p),
+                        Pixel::R16_SFLOAT(p) => half::f16::to_f32(p),
+                        _ => panic!("Unsupported format")
                     };
                     let k1 = p;
                     t += k1 * w;
@@ -427,7 +426,7 @@ impl TextureKtx2 {
                 let t1 = t / sum;
                 let t = half::f16::from_f32(clamp(t1, 0.0, max));
     
-                out.write_pixel(x, outy, Pixel::F16(t));
+                out.write_pixel(x, outy, Pixel::R16_SFLOAT(t));
             }
         }
         out
@@ -483,7 +482,8 @@ impl TextureKtx2 {
                 for (i, w) in ws.iter().enumerate() {
                     let pixel = image.read_pixel(left + i as u32, y);
                     let p = match pixel {
-                        Pixel::F16(p) => half::f16::to_f32(p),
+                        Pixel::R16_SFLOAT(p) => half::f16::to_f32(p),
+                        _ => panic!("Unsupported format")
                     };
                     let k1 = p;
                     t += k1 * w;
@@ -492,7 +492,7 @@ impl TextureKtx2 {
                 let t1 = t / sum;
                 let t = half::f16::from_f32(clamp(t1, 0.0, max));
     
-                out.write_pixel(outx, y, Pixel::F16(t));
+                out.write_pixel(outx, y, Pixel::R16_SFLOAT(t));
             }
         }
         out
