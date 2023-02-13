@@ -64,14 +64,14 @@ impl TextureKtx2 {
         let dfd = BasicDataFormatDescriptor::new(format);
 
         let mut levels = Vec::new();
-        let pixel_size = get_format_pixel_size_bytes(format) as u32;
+        let pixel_size = get_format_pixel_size_bytes(format);
+        let byte_length = (width as f32 * height as f32 * pixel_size) as u64;
 
         levels.push(Level {
             byte_offset: 200u64,
-            byte_length: (width*height*pixel_size) as u64,
-            uncompressed_byte_length: (width*height*pixel_size) as u64
+            byte_length: byte_length,
+            uncompressed_byte_length: byte_length
         });
-        let byte_length = levels[0].byte_length as usize;
 
         let index_size = (32 + std::mem::size_of::<Level>() * levels.len()) as u32;
         let mut index = Index {
@@ -120,14 +120,14 @@ impl TextureKtx2 {
             supercompression_global_data: Vec::new(),
 
             // Mip Level Array 
-            level_images: vec![0x00; byte_length]
+            level_images: vec![0x00; byte_length as usize]
         };
         texture
     }
 
     pub fn read_pixel(&self, x: u32, y: u32) -> Pixel {
         let pixel_size = get_format_pixel_size_bytes(self.header.vk_format);
-        let index: usize = (x as usize) * pixel_size + (self.header.pixel_width as usize) * (y as usize) * pixel_size;
+        let index: usize = ((x as f32) * pixel_size + (self.header.pixel_width as f32) * (y as f32) * pixel_size) as usize;
         match self.header.vk_format {
             VkFormat::R16_SFLOAT => {
                 let mut a: [u8; 2] = [0,0];
@@ -136,13 +136,13 @@ impl TextureKtx2 {
                 let value = half::f16::from_le_bytes(a);
                 return Pixel::R16_SFLOAT(value);
             },
-            _ => panic!("Unsupported vk_format {:?}", self.header.vk_format)
+            _ => panic!("Unsupported format for direct pixel write {:?}", self.header.vk_format)
         };
     }
 
     pub fn write_pixel(&mut self, x: u32, y: u32, pixel: Pixel) { // TODO check format and Pixel format
         let pixel_size = get_format_pixel_size_bytes(self.header.vk_format);
-        let index: usize = (x as usize) * pixel_size + (self.header.pixel_width as usize) * (y as usize) * pixel_size;
+        let index: usize = ((x as f32) * pixel_size + (self.header.pixel_width as f32) * (y as f32) * pixel_size) as usize;
         let mut data = vec![];
         match pixel {
             Pixel::R16_SFLOAT(value) => {
@@ -155,7 +155,8 @@ impl TextureKtx2 {
                 self.level_images[index + 1] = data[1];
                 self.level_images[index + 2] = data[2];
                 self.level_images[index + 3] = data[3];
-            }
+            },
+            _ => panic!("Unsupported format for direct pixel write {:?}", self.header.vk_format)
         }
     }
 

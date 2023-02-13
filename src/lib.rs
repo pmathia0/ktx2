@@ -39,7 +39,27 @@ mod tests {
         tex.write_pixel(0, 1, Pixel::R8G8B8A8_UNORM([0,0,255,255]));
         tex.write_pixel(1, 1, Pixel::R8G8B8A8_UNORM([255,255,0,255]));
 
-        tex.write_to_ktx2("output_rgba8_uint.ktx2").unwrap();
+        tex.write_to_ktx2("output_rgba8_unorm.ktx2").unwrap();
+
+        assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn test_bc1_new() {
+        let size = 4u32;
+
+        let mut tex: TextureKtx2 = TextureKtx2::new(size, size, VkFormat::BC1_RGB_UNORM_BLOCK);
+        
+        tex.write_to_ktx2("output_bc1_rgba_unorm.ktx2").unwrap();
+
+        assert_eq!(2 + 2, 4);
+    }
+
+    #[test]
+    fn test_bc1_load() {
+        let mut tex: TextureKtx2 = TextureKtx2::read_from_ktx2("output_bc1_rgba_unorm.ktx2").unwrap();
+        
+        tex.write_to_ktx2("output_bc1_rgba_unorm2.ktx2").unwrap();
 
         assert_eq!(2 + 2, 4);
     }

@@ -285,15 +285,17 @@ pub const fn get_format_type_size_bytes(format: VkFormat) -> u32 {
     match format {
         VkFormat::R16_SFLOAT => 2,
         VkFormat::R8G8B8A8_UNORM => 1,
+        VkFormat::BC1_RGB_UNORM_BLOCK => 1,
         _ => panic!("Unsupported format")
     }
 }
 
 #[inline(always)]
-pub const fn get_format_pixel_size_bytes(format: VkFormat) -> usize {
+pub const fn get_format_pixel_size_bytes(format: VkFormat) -> f32 {
     match format {
-        VkFormat::R16_SFLOAT => 2,
-        VkFormat::R8G8B8A8_UNORM => 4,
+        VkFormat::R16_SFLOAT => 2.0,
+        VkFormat::R8G8B8A8_UNORM => 4.0,
+        VkFormat::BC1_RGB_UNORM_BLOCK => 0.5,
         _ => panic!("Unsupported format")
     }
 }

@@ -87,7 +87,29 @@ impl BasicDataFormatDescriptor {
                     row_5: 0u32,
                     samples
                 }
-            }
+            },
+            VkFormat::BC1_RGB_UNORM_BLOCK => {
+                let samples = vec![
+                    // R
+                    DFDSampleType {
+                        row_0: 0 << 0 | 63 << 16 | 0b0000_0000 << 24,
+                        row_1: 0u32,
+                        row_2: 0,
+                        row_3: u32::MAX
+                    }
+                ];
+                let descriptor_block_size = (24 + std::mem::size_of::<DFDSampleType>() * samples.len()) as u32;
+                BasicDataFormatDescriptor {
+                    dfd_total_size: descriptor_block_size + 4,
+                    row_0: 0u32,
+                    row_1: 2 << 0  | descriptor_block_size << 16,
+                    row_2: 128 << 0 | 1 << 8 | 1 << 16 | 0 << 24,
+                    row_3: 3 << 0 | 3 << 8 | 0 << 16 | 0 << 24,
+                    row_4: 8,
+                    row_5: 0u32,
+                    samples
+                }
+            },
             _ => panic!("Unsupported format {:?}", vk_format)
         }
     }
