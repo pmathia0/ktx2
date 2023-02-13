@@ -49,28 +49,28 @@ impl BasicDataFormatDescriptor {
                 let samples = vec![
                     // R
                     DFDSampleType {
-                        row_0: 0 << 0 | 7 << 16 | 0b0001_0000 << 24,
+                        row_0: 0 << 0 | 7 << 16 | 0b0000_0000 << 24,
                         row_1: 0u32,
                         row_2: 0,
                         row_3: 255
                     },
                     // G
                     DFDSampleType {
-                        row_0: 8 << 0 | 7 << 16 | 0b0001_0001 << 24,
+                        row_0: 8 << 0 | 7 << 16 | 0b0000_0001 << 24,
                         row_1: 0u32,
                         row_2: 0,
                         row_3: 255
                     },
                     // B
                     DFDSampleType {
-                        row_0: 16 << 0 | 7 << 16 | 0b0001_0010 << 24,
+                        row_0: 16 << 0 | 7 << 16 | 0b0000_0010 << 24,
                         row_1: 0u32,
                         row_2: 0,
                         row_3: 255
                     },
                     // A
                     DFDSampleType {
-                        row_0: 24 << 0 | 7 << 16 | 0b0001_1111 << 24,
+                        row_0: 24 << 0 | 7 << 16 | 0b0000_1111 << 24,
                         row_1: 0u32,
                         row_2: 0,
                         row_3: 255
