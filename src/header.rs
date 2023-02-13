@@ -2,7 +2,7 @@ use crate::vk_format::VkFormat;
 
 #[derive(Clone, Copy)]
 #[repr(C)]
-pub(crate) struct Header {
+pub struct Header {
     pub identifier: [u8; 12],
     pub vk_format: VkFormat,
     pub type_size: u32,

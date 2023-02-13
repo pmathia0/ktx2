@@ -23,7 +23,7 @@ use crate::filter::*;
 
 #[repr(C, align(1))]
 pub struct TextureKtx2 {
-    header: Header,
+    pub header: Header,
 
     // Index 
     index: Index,
