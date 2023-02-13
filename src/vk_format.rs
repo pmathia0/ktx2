@@ -284,7 +284,16 @@ pub enum VkFormat {
 pub const fn get_format_type_size_bytes(format: VkFormat) -> u32 {
     match format {
         VkFormat::R16_SFLOAT => 2,
-        VkFormat::R8G8B8A8_UINT => 4,
+        VkFormat::R8G8B8A8_UNORM => 1,
+        _ => panic!("Unsupported format")
+    }
+}
+
+#[inline(always)]
+pub const fn get_format_pixel_size_bytes(format: VkFormat) -> usize {
+    match format {
+        VkFormat::R16_SFLOAT => 2,
+        VkFormat::R8G8B8A8_UNORM => 4,
         _ => panic!("Unsupported format")
     }
 }

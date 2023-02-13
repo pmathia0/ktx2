@@ -1,4 +1,4 @@
-use crate::vk_format::{VkFormat, get_format_type_size_bytes};
+use crate::vk_format::{VkFormat, get_format_pixel_size_bytes};
 
 #[derive(Clone)]
 #[repr(C)]
@@ -12,6 +12,7 @@ pub struct DFDSampleType {
 #[derive(Clone)]
 #[repr(C)]
 pub struct BasicDataFormatDescriptor {
+    pub dfd_total_size: u32,
     pub row_0: u32,
     pub row_1: u32,
     pub row_2: u32,
@@ -22,7 +23,7 @@ pub struct BasicDataFormatDescriptor {
 }
 
 impl BasicDataFormatDescriptor {
-    pub fn new(vk_format: VkFormat) -> (Self, u32) {
+    pub fn new(vk_format: VkFormat) -> Self {
         match vk_format {
             VkFormat::R16_SFLOAT => {
                 let samples = vec![
@@ -33,17 +34,18 @@ impl BasicDataFormatDescriptor {
                         row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
                     }];
                 let descriptor_block_size = (24 + std::mem::size_of::<DFDSampleType>() * samples.len()) as u32;
-                (BasicDataFormatDescriptor {
+                BasicDataFormatDescriptor {
+                    dfd_total_size: descriptor_block_size + 4,
                     row_0: 0u32,
                     row_1: 2 << 0  | descriptor_block_size << 16,
                     row_2: 1 << 0 | 1 << 8 | 1 << 16 | 0 << 24,
                     row_3: 0u32,
-                    row_4: get_format_type_size_bytes(vk_format),
+                    row_4: get_format_pixel_size_bytes(vk_format) as u32,
                     row_5: 0u32,
                     samples
-                }, descriptor_block_size)
+                }
             },
-            VkFormat::R8G8B8A8_UINT => {
+            VkFormat::R8G8B8A8_UNORM => {
                 let samples = vec![
                     // R
                     DFDSampleType {
@@ -75,15 +77,16 @@ impl BasicDataFormatDescriptor {
                     }
                 ];
                 let descriptor_block_size = (24 + std::mem::size_of::<DFDSampleType>() * samples.len()) as u32;
-                (BasicDataFormatDescriptor {
+                BasicDataFormatDescriptor {
+                    dfd_total_size: descriptor_block_size + 4,
                     row_0: 0u32,
                     row_1: 2 << 0  | descriptor_block_size << 16,
                     row_2: 1 << 0 | 1 << 8 | 1 << 16 | 0 << 24,
                     row_3: 0u32,
-                    row_4: 4,
+                    row_4: get_format_pixel_size_bytes(vk_format) as u32,
                     row_5: 0u32,
                     samples
-                }, descriptor_block_size)
+                }
             }
             _ => panic!("Unsupported format {:?}", vk_format)
         }
@@ -93,6 +96,7 @@ impl BasicDataFormatDescriptor {
 impl Default for BasicDataFormatDescriptor {
     fn default() -> Self {
         Self {
+            dfd_total_size: 24u32,
             row_0: 0u32,
             row_1: 0u32,
             row_2: 0u32,

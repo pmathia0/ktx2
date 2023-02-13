@@ -33,11 +33,11 @@ mod tests {
     fn test_rgba8_uint() {
         let size = 2u32;
 
-        let mut tex: TextureKtx2 = TextureKtx2::new(size, size, VkFormat::R8G8B8A8_UINT);
-        tex.write_pixel(0, 0, Pixel::R8G8B8A8_UINT([255,0,0,255]));
-        tex.write_pixel(1, 0, Pixel::R8G8B8A8_UINT([0,255,0,255]));
-        tex.write_pixel(0, 1, Pixel::R8G8B8A8_UINT([0,0,255,255]));
-        tex.write_pixel(1, 1, Pixel::R8G8B8A8_UINT([255,255,0,255]));
+        let mut tex: TextureKtx2 = TextureKtx2::new(size, size, VkFormat::R8G8B8A8_UNORM);
+        tex.write_pixel(0, 0, Pixel::R8G8B8A8_UNORM([255,0,0,255]));
+        tex.write_pixel(1, 0, Pixel::R8G8B8A8_UNORM([0,255,0,255]));
+        tex.write_pixel(0, 1, Pixel::R8G8B8A8_UNORM([0,0,255,255]));
+        tex.write_pixel(1, 1, Pixel::R8G8B8A8_UNORM([255,255,0,255]));
 
         tex.write_to_ktx2("output_rgba8_uint.ktx2").unwrap();
 
