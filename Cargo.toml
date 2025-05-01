@@ -2,10 +2,10 @@
 name = "ktx2"
 version = "0.1.1"
 authors = ["Peter Mathia <mathiapeter@outlook.com>"]
-edition = "2018"
+edition = "2024"
 
 [dependencies]
 byteorder = { version = "1.4" }
-half = { version="2.2" }
+half = { version = "2.2" }
 anyhow = "1.0"
 field-offset = "0.3"
