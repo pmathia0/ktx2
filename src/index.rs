@@ -1,6 +1,7 @@
 use crate::level::Level;
 
 #[repr(C)]
+#[derive(Clone)]
 pub(crate) struct Index {
     pub dfd_byte_offset: u32,
     pub dfd_byte_length: u32,
@@ -8,5 +9,5 @@ pub(crate) struct Index {
     pub kvd_byte_length: u32,
     pub sgd_byte_offset: u64,
     pub sgd_byte_length: u64,
-    pub levels: Vec<Level>
+    pub levels: Vec<Level>,
 }

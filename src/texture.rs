@@ -22,6 +22,7 @@ use crate::vk_format::*;
 use crate::filter::*;
 
 #[repr(C, align(1))]
+#[derive(Clone)]
 pub struct TextureKtx2 {
     pub header: Header,
 
