@@ -277,16 +277,17 @@ pub enum VkFormat {
     ASTC_6x6x6_SFLOAT_BLOCK_EXT = 1000288029,
     A4R4G4B4_UNORM_PACK16_EXT = 1000340000,
     A4B4G4R4_UNORM_PACK16_EXT = 1000340001,
-    MAX_ENUM = 0x7FFFFFFF
+    MAX_ENUM = 0x7FFFFFFF,
 }
 
 #[inline(always)]
 pub const fn get_format_type_size_bytes(format: VkFormat) -> u32 {
     match format {
         VkFormat::R16_SFLOAT => 2,
+        VkFormat::R16G16B16A16_SFLOAT => 2,
         VkFormat::R8G8B8A8_UNORM => 1,
         VkFormat::BC1_RGB_UNORM_BLOCK => 1,
-        _ => panic!("Unsupported format")
+        _ => panic!("Unsupported format"),
     }
 }
 
@@ -294,8 +295,9 @@ pub const fn get_format_type_size_bytes(format: VkFormat) -> u32 {
 pub const fn get_format_pixel_size_bytes(format: VkFormat) -> f32 {
     match format {
         VkFormat::R16_SFLOAT => 2.0,
+        VkFormat::R16G16B16A16_SFLOAT => 8.0,
         VkFormat::R8G8B8A8_UNORM => 4.0,
         VkFormat::BC1_RGB_UNORM_BLOCK => 0.5,
-        _ => panic!("Unsupported format")
+        _ => panic!("Unsupported format"),
     }
 }

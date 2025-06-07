@@ -156,6 +156,20 @@ impl TextureKtx2 {
                 self.level_images[index] = data[0];
                 self.level_images[index + 1] = data[1];
             }
+            Pixel::R16G16B16A16_SFLOAT(value) => {
+                data.write_u16::<LittleEndian>(f16::to_bits(value[0]))
+                    .unwrap();
+                data.write_u16::<LittleEndian>(f16::to_bits(value[1]))
+                    .unwrap();
+                data.write_u16::<LittleEndian>(f16::to_bits(value[2]))
+                    .unwrap();
+                data.write_u16::<LittleEndian>(f16::to_bits(value[3]))
+                    .unwrap();
+                self.level_images[index] = data[0];
+                self.level_images[index + 1] = data[1];
+                self.level_images[index + 2] = data[2];
+                self.level_images[index + 3] = data[3];
+            }
             Pixel::R8G8B8A8_UNORM(data) => {
                 self.level_images[index] = data[0];
                 self.level_images[index + 1] = data[1];

@@ -45,6 +45,50 @@ impl BasicDataFormatDescriptor {
                     samples,
                 }
             }
+            VkFormat::R16G16B16A16_SFLOAT => {
+                let samples = vec![
+                    // R
+                    DFDSampleType {
+                        row_0: 15 << 16,
+                        row_1: 0u32,
+                        row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
+                        row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
+                    },
+                    // G
+                    DFDSampleType {
+                        row_0: 16 | 15 << 16 | 0b0000_0001 << 24,
+                        row_1: 0u32,
+                        row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
+                        row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
+                    },
+                    // B
+                    DFDSampleType {
+                        row_0: 32 | 15 << 16 | 0b0000_0010 << 24,
+                        row_1: 0u32,
+                        row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
+                        row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
+                    },
+                    // A
+                    DFDSampleType {
+                        row_0: 48 | 15 << 16 | 0b0000_1111 << 24,
+                        row_1: 0u32,
+                        row_2: 0xBF800000u32, // IEEE 754 floating-point representation for -1.0f
+                        row_3: 0x3F800000u32, // IEEE 754 floating-point representation for 1.0f
+                    },
+                ];
+                let descriptor_block_size =
+                    (24 + std::mem::size_of::<DFDSampleType>() * samples.len()) as u32;
+                BasicDataFormatDescriptor {
+                    dfd_total_size: descriptor_block_size + 4,
+                    row_0: 0u32,
+                    row_1: 2 | descriptor_block_size << 16,
+                    row_2: 1 << 0 | 1 << 8 | 1 << 16,
+                    row_3: 0u32,
+                    row_4: get_format_pixel_size_bytes(vk_format) as u32,
+                    row_5: 0u32,
+                    samples,
+                }
+            }
             VkFormat::R8G8B8A8_UNORM => {
                 let samples = vec![
                     // R
