@@ -136,8 +136,16 @@ impl TextureKtx2 {
                 let value = half::f16::from_le_bytes(a);
                 Pixel::R16_SFLOAT(value)
             }
+            VkFormat::R8G8B8A8_UNORM => {
+                let mut a: [u8; 4] = [0, 0, 0, 0];
+                a[0] = self.level_images[index];
+                a[1] = self.level_images[index + 1];
+                a[2] = self.level_images[index + 2];
+                a[3] = self.level_images[index + 3];
+                Pixel::R8G8B8A8_UNORM(a)
+            }
             _ => panic!(
-                "Unsupported format for direct pixel write {:?}",
+                "Unsupported format for direct pixel read {:?}",
                 self.header.vk_format
             ),
         }
@@ -444,7 +452,7 @@ impl TextureKtx2 {
     }
 
     pub fn vertical_sample(
-        image: &mut TextureKtx2,
+        image: TextureKtx2,
         new_height: u32,
         filter: &mut Filter,
     ) -> TextureKtx2 {
@@ -576,7 +584,7 @@ impl TextureKtx2 {
     }
 
     pub fn resize(
-        image: &mut TextureKtx2,
+        image: TextureKtx2,
         nwidth: u32,
         nheight: u32,
         filter: FilterType,
